@@ -1,0 +1,284 @@
+<html>
+
+<head>
+    <meta charset="utf-8" />
+<meta name="description" content="" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>
+    VerySky.Org
+</title>
+<link rel="shortcut icon" href="https://www.verysky.org/favicon.ico?v=1657375471129">
+<!-- <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous"> -->
+<link href="https://cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://www.verysky.org/styles/main.css">
+<!-- js -->
+<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+<script src="https://www.verysky.org/media/js/jquery.sticky-sidebar.min.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdn.bootcss.com/moment.js/2.23.0/moment.min.js"></script>
+
+
+</head>
+
+<body>
+    <div class="main">
+        <div class="header">
+    <div class="nav">
+        <div class="logo">
+            <a href="https://www.verysky.org">
+                <img class="avatar" src="https://www.verysky.org/images/avatar.png?v=1657375471129" alt="">
+            </a>
+            <div class="site-title">
+                <h1>
+                    VerySky.Org
+                </h1>
+            </div>
+        </div>
+        <span class="menu-btn fa fa-align-justify"></span>
+        <div class="menu-container">
+            <ul>
+                
+                    
+                            <li>
+                                <a href="/" class="menu">
+                                    首页
+                                </a>
+                            </li>
+                            
+                                
+                    
+                            <li>
+                                <a href="/archives" class="menu">
+                                    归档
+                                </a>
+                            </li>
+                            
+                                
+                    
+                            <li>
+                                <a href="/tags" class="menu">
+                                    标签
+                                </a>
+                            </li>
+                            
+                                
+                    
+                            <li>
+                                <a href="/post/about" class="menu">
+                                    关于
+                                </a>
+                            </li>
+                            
+                                
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        $(".menu-btn").click(function() {
+            $(".menu-container").slideToggle();
+        });
+        $(window).resize(function() {
+
+            if (window.matchMedia('(min-width: 960px)').matches) {
+                $(".menu-container").css('display', 'block')
+            } else {
+                $(".menu-container").css('display', 'none')
+            }
+
+        });
+    });
+</script>
+
+            <div id="main-content" class="post-container main-container">
+                <div id="content" class="main-container-left">
+                    
+        
+            <article class="post i-card">
+                <h2 class="post-title">
+                    <a href="https://www.verysky.org/post/Hl5L5gRlC/">
+                        虚拟显示器——在没有显示器连接时激活Windows 10多显示器设置
+                    </a>
+                </h2>
+                <div class="post-info">
+                    <time class="post-time">2021-10-05</time>
+                    
+                        <a href="https://www.verysky.org/tag/QyWj3vpgY/" class="post-tag i-tag
+                            i-tag-other_3">
+            #virtual display
+        </a>
+                        
+                        <a href="https://www.verysky.org/tag/MqhVscI2Be/" class="post-tag i-tag
+                            i-tag-">
+            #虚拟显示器
+        </a>
+                        
+                </div>
+                <div class="post-article">
+                    
+                            <div class="post-content">
+                                
+                                        <div class="post-content-content">
+                                            原文地址：Activating a Secondary Display on Windows 10 when no Monitor is Connected
+下面为机翻，调整了关键的命令行关键字，以便复制运行。需要注意的是本文是虚拟的显示器，不是虚拟桌面。该功能可以将虚拟显示器扩展投屏分享，不与主屏发生联系，且不用外接连接线。
+
+在某些情况下，您需要模拟一个或多个连接到您的系统的辅助显示器。这是最需要的远程控制应用程序或USB类型的显示器，如Amyuni USB移动显示器产品。
+在Windows 10之前，很容易通过显示设置控制面板激活VGA显示器来模拟连接第二个显示器。如果你正在寻找旧系统的解决方案，滚动到这篇文章的结尾。
+Windows 10删除了在没有连接VGA显示器时激活VGA显示器的选项。我们在这里提供了一个简单而免费的解决方案，可以在您的系统上创建多达4个虚拟显示器。
+以下是将虚拟显示器添加到您的系统的过程(仅限Windows 10 !)
+- 从https://www.amyuni.com/downloads/usbmmidd_v2.zip 下载我们的虚拟显示驱动程序&amp;gt;
+- 将zip文件解压缩到一个空文件夹，例如c: \temp\usbmmidd_v2
+- 请确保您像阅读任何其他软件产品一样阅读License.txt文件
+- 以管理员身份打开命令提示符窗口(除非以管理员身份运行，否则不能向系统添加设备)
+- 执行如下命令:
+- CD c:\temp\usbmmid_v2(或任何你选择的目标文件夹)
+- deviceinstaller64 install usbmmidd.inf usbmmidd
+- 请确保您看到驱动程序由Amyuni Technologies Inc.签署的消息。这是一个确认，驱动程序通过微软驱动程序签名程序，是无病毒的
+- deviceinstaller64 enableidd 1
+为了在Windows 10中添加4个虚拟显示器，您最多可以运行最后一条命令4次。
+如果你使用的是32位系统，将&amp;quot;deviceinstaller64&amp;quot;替换为&amp;quot;deviceinstaller&amp;quot;
+包含的批处理文件usbmmid .bat会自动运行这些命令，并在32位或64位版本的设备安装程序之间进行选择。如果您不习惯打开命令提示符并输入这些命令，右键单击usbmmid .bat和“以管理员身份运行”。
+就是这样。现在在显示设置中有一个高清晰度显示器。默认分辨率是1920x1080像素，如果您需要其他分辨率，请检查包含的idd_instructions.txt文件，以了解如何指定您自己的分辨率。在你的系统的显示设置中，你可以放置显示器，改变分辨率，扩展桌面或者做任何你用真实显示器做的事情。
+虚拟显示器默认支持以下显示分辨率：
+1024x768像素
+1360 x 768像素
+1440 x 900像素
+1600 x 900像素
+1600 x 1200像素
+1920 x 1080像素(默认分辨率)
+1920 x 1200像素
+2560 x 1440像素
+3840x2160像素
+执行上述第一步后，您可以通过更改以下注册表项来修改支持的分辨率列表：
+ HKEY\U LOCAL\U MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\WUDF\Services\usbmmIdd\Parameters\Monitors
+通过此注册表项最多可以定义10个分辨率。键的名称应该从“0”到“9”。（默认）注册表值定义默认显示器分辨率。
+禁用虚拟显示器。
+使用实例
+deviceinstaller64 enableidd 0
+(如果添加了多个虚拟显示，请多次运行此命令)
+重新激活:
+deviceinstaller64 enableidd 1
+要从你的系统中完全移除驱动程序，你可以通过设备管理器卸载“USB移动显示器虚拟显示”，或者运行以下命令:
+deviceinstaller64 stop usbmmidd
+deviceinstaller64 remove usbmmid
+Windows 10之前的操作步骤如下:
+- 右键单击桌面，选择“屏幕分辨率”或“显示设置”
+- 点击主显示器旁边的“检测”
+- 选择“未检测到另一个显示”-&amp;gt;多个显示-&amp;gt;尝试连接VGA
+- 这将添加第二个虚拟显示器，然后您可以将其配置为真实显示器
+其他适用于所有系统的解决方案是购买一个硬件狗连接到你的系统的HDMI、DVI或VGA连接器，以模拟显示器是实际连接的。
+欲了解更多有关USB移动显示器的详细信息，请访问我们的专门网站:
+www.usbmobilemonitor.com
+Amyuni开发团队
+
+
+                                        </div>
+                                        
+                                            <a class="btn btn-text" href="https://www.verysky.org/post/Hl5L5gRlC/">Read More ~</a>
+                            </div>
+                </div>
+            </article>
+            
+            <article class="post i-card">
+                <h2 class="post-title">
+                    <a href="https://www.verysky.org/post/hello-gridea/">
+                        Hello Gridea
+                    </a>
+                </h2>
+                <div class="post-info">
+                    <time class="post-time">2018-12-12</time>
+                    
+                        <a href="https://www.verysky.org/tag/DfdiEhxF-/" class="post-tag i-tag
+                            i-tag-other_3">
+            #Gridea
+        </a>
+                        
+                </div>
+                <div class="post-article">
+                    
+                        <a href="https://www.verysky.org/post/hello-gridea/" class="post-feature-image" style="background-image:url(https://www.verysky.org/post-images/hello-gridea.png) ">
+                        </a>
+                        
+                            <div class="post-content">
+                                
+                                    <div class="post-content-abstract">
+                                        <p>👏  欢迎使用 <strong>Gridea</strong> ！<br>
+✍️  <strong>Gridea</strong> 一个静态博客写作客户端。你可以用它来记录你的生活、心情、知识、笔记、创意... ...</p>
+
+                                    </div>
+                                    
+                                            <a class="btn btn-text" href="https://www.verysky.org/post/hello-gridea/">Read More ~</a>
+                            </div>
+                </div>
+            </article>
+            
+                <!-- 翻页 -->
+                
+                </div>
+                <!--  -->
+                <div class="main-container-middle"></div>
+                <!--  -->
+                <div id="sidebar" class="main-container-right">
+
+                    <!-- 个人信息 -->
+                    
+    <div class="id_card i-card">
+        <div class="id_card-avatar" style="background-image: url(https://www.verysky.org/images/avatar.png?v=1657375471129)">
+        </div>
+        <h1 class="id_card-title">
+            VerySky.Org
+        </h1>
+        <h2 class="id_card-description">
+            温故而知新
+        </h2>
+        <!--  -->
+        <div class="id_card-sns">
+            <!-- github -->
+            
+                    <!-- twitter -->
+                    
+                            <!-- weibo -->
+                            
+                                    <!-- facebook -->
+                                    
+
+        </div>
+    </div>
+    
+
+                        <!-- 公告栏 -->
+                        
+
+                </div>
+            </div>
+
+
+
+            <div class="site-footer">
+  In Germany, they first came for the Communists, and I didn't speak up because I wasn't a Communist. Then they came for the Jews, and I didn't speak up because I wasn't a Jew. </p><p>起初他们追杀共产主义者，我没有说话，因为我不是共产主义者。后来他们追杀犹太人，我没有说话，因为我不是犹太人。
+</p><p>Then they came for the trade unionists, and I didn't speak up because I wasn't a trade unionist.Then they came for the Catholics, and I didn't speak up because I was a Protestant.</p><p>
+后来他们追杀工会成员，我没有说话，因为我不是工会成员。此后他们追杀天主教徒，我没有说话，因为我是新教教徒。</p><p>
+Then they came for me, but by that time, here was no one left to speak up.
+</p><p>最后他们奔我而来，却再也没有人站出来为我说话了……
+</p><p>――Pastor Martin Niemoeller(马丁·尼莫拉)</p><p>
+Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a></p> | 
+  <a class="rss" href="https://www.verysky.org/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+</script>
+
+    </div>
+    <script>
+        $('#sidebar').stickySidebar({
+            topSpacing: 80,
+            // bottomSpacing: 60
+        });
+    </script>
+</body>
+
+</html>
