@@ -1,0 +1,984 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <id>https://www.verysky.org</id>
+    <title>VerySky.Org</title>
+    <updated>2023-07-03T04:30:59.504Z</updated>
+    <generator>https://github.com/jpmonette/feed</generator>
+    <link rel="alternate" href="https://www.verysky.org"/>
+    <link rel="self" href="https://www.verysky.org/atom.xml"/>
+    <subtitle>义理必时习而后能悦&lt;br&gt;
+学问必温故而后知新</subtitle>
+    <logo>https://www.verysky.org/images/avatar.png</logo>
+    <icon>https://www.verysky.org/favicon.ico</icon>
+    <rights>All rights reserved 2023, VerySky.Org</rights>
+    <entry>
+        <title type="html"><![CDATA[OpenCore 安装卡住的拯救手册Q&A]]></title>
+        <id>https://www.verysky.org/post/TPrCgTW0L/</id>
+        <link href="https://www.verysky.org/post/TPrCgTW0L/">
+        </link>
+        <updated>2022-07-28T14:53:50.000Z</updated>
+        <content type="html"><![CDATA[<p>概述</p>
+<p>本文最后更新：2021年11月3日<br>
+本文内容主要针对正在迁移到 OpenCore 这个天坑的用户，主要涉及常见的界面调整，-v 跑代码时卡住等问题，本文长期整理更新，遇到文中没有提到的问题欢迎反馈。本文涉及内容较多，可按下 Ctrl + F 或 Command + F 直接查找关键词。</p>
+<p>新手常见错误</p>
+<h2 id="q1ocabc-incompatible-openruntime-r10-require-r11">Q1：OCABC: Incompatible OpenRuntime r10, require r11</h2>
+<pre><code>OCABC: Incompatible OpenRuntime r10, require r11
+Halting on critical error
+</code></pre>
+<p>A：此问题由升级替换文件不完全造成，/EFI/OC 目录下的 OpenCore.efi，/EFI/OC/Drivers 目录下的 OpenRuntime.efi，必须来自同一版本。<br>
+OpenCore 的关键文件：BOOTx64.efi、OpenCore.efi、OpenRuntime.efi、OpenCanopy.efi（用于支持官方主题服务）</p>
+<h2 id="q2this-version-of-mac-os-x-is-not-supported-on-this-platform">Q2：This version of Mac OS X is not supported on this platform!</h2>
+<pre><code>This version of Mac OS X is not supported on this platform!
+</code></pre>
+<p>A：问题原因：使用了较新的机型ID，但是这个机型不支持旧版本系统，例如：MacPro7,1 仅能安装 macOS 10.15 及以上，不支持 macOS 10.13-10.14；另一种可能的原因是反过来，即：使用了太旧的机型ID，但这个机型不支持最新版本的系统。</p>
+<h2 id="q3configuration-requires-vault-but-no-vault-provided">Q3：configuration requires vault but no vault provided!</h2>
+<pre><code>configuration requires vault but no vault provided!
+</code></pre>
+<p>A：这是最常见的新手错误了，修改 Config.plist 中：<br>
+Misc→Security→Vault→Optional<br>
+将 Vault 值设置为 Optional，注意大小写敏感。</p>
+<h2 id="q4opencore-启动界面不显示安装-u-盘macos-系统盘recovery-等选项">Q4：OpenCore 启动界面不显示安装 U 盘，macOS 系统盘，Recovery 等选项。</h2>
+<p>A：修改 config.plist：<br>
+Misc→Security→ScanPolicy→ 0<br>
+填写 0 会扫描所有内容并开启所有选项。其它可选值：3870467，默认：983299</p>
+<h2 id="q5ocimage-kextsxxxxkextcontentsmacosxxxxkext-is-missing-for-kext-xxxxkext">Q5：oc：Image Kexts\XXXX.kext\Contents\MacOS\XXXX.kext is missing for kext XXXX.kext ()</h2>
+<pre><code>oc：Image Kexts\XXXX.kext\Contents\MacOS\XXXX.kext is missing for kext XXXX.kext ()
+Halting on critical error
+</code></pre>
+<p>A：上面的代码中，XXXX.kext 可能是任何值，例如 VirtualSMC.kext，CPUFriend.kext，AppleALC.kext 等等，但是问题的原因是一样的：在 /EFI/OC/Kexts/ 目录下没有对应的 kext 文件。解决方法也很简单，添加对应的 kext，或者在 config.plist 中禁用相关的 kext。下载 kext 可以看看 <a href="https://heipg.cn/tag/driver-package">黑苹果星球整理的月度 kext 更新包</a>。除此之外还有 XXX.efi is missing 之类的也是同类型错误，只是 XXX.efi 文件一般位于 /EFI/OC/Drivers/ 目录下。</p>
+<h2 id="q7start-randomseed">Q7：Start RandomSeed</h2>
+<pre><code>Start RandomSeed
+End RandomSeed
++++++++++++++++++++++
+</code></pre>
+<p>A：修改 config.plist 中：<br>
+Booter：<br>
+以下选项项取决于 Memory Attribute Table（MAT）支持情况，如何确定 MAT 支持？<br>
+使用 Debug 版 OpenCore，并在 config 中设置以下选项：</p>
+<ul>
+<li>Misc→Debug→Target→67<br>
+在 EFI 日志中查找以下内容：<br>
+OCABC: MAT support is 1</li>
+</ul>
+<p>以上 1 代表支持，0 代表不支持 MAT。<br>
+如果支持：</p>
+<ul>
+<li>
+<p>EnableWriteUnprotector→False</p>
+</li>
+<li>
+<p>RebuildAppleMemoryMap→True</p>
+</li>
+<li>
+<p>SyncRuntimePermissions→True<br>
+如果不支持：</p>
+</li>
+<li>
+<p>EnableWriteUnprotector→True</p>
+</li>
+<li>
+<p>RebuildAppleMemoryMap→False</p>
+</li>
+<li>
+<p>SyncRuntimePermissions→False<br>
+其它：</p>
+</li>
+<li>
+<p>SetupVirtualMap→False/No</p>
+<ul>
+<li>大部分 GA 主板，以及更老的硬件如第 4 代酷睿需要开启；</li>
+<li>Icelake 以及 Comet Lake 不能开启此项；</li>
+<li>AMD B550 和 A520（以及最新 BIOS 的 X570）不能开启此项；</li>
+<li>AMD 线程撕裂者 TRx40 不能开启此项；</li>
+<li>华硕 X299 v3006 及以上版本的 BIOS（包括其他品牌 X299 + 最新 BIOS）不能开启此项；</li>
+</ul>
+</li>
+<li>
+<p>DevirtualiseMmio</p>
+<ul>
+<li>部分硬件平台并不能很好的适应这个 Quirk，例如部分 Z390 和绝大部分的 X99 和 X299。它的工作方式是占用 MMIO 区域并删除运行时属性，使它们可用作存放内核的空间，注意这个 Quirk 在绝大部分的系统上并不要求一定要填写 MmioWhiteList，但在某些非常难安装的平台（例如：线程撕裂者 TRX40 19H 或 10300H），在启用此 Quirk 的同时还需设置 MmioWhiteList，使用 Debug 版 OpenCore 并开启 DevirtualiseMmio，你会在日志中找到类似以下内容：<br>
+21:495 00:009 OCABC: MMIO devirt start<br>
+21:499 00:003 OCABC: MMIO devirt 0x60000000 (0x10000 pages, 0x8000000000000001) skip 0<br>
+21:503 00:003 OCABC: MMIO devirt 0xFE000000 (0x11 pages, 0x8000000000000001) skip 0<br>
+21:506 00:003 OCABC: MMIO devirt 0xFEC00000 (0x1 pages, 0x8000000000000001) skip 0<br>
+21:510 00:003 OCABC: MMIO devirt 0xFED00000 (0x1 pages, 0x8000000000000001) skip 0<br>
+21:513 00:003 OCABC: MMIO devirt 0xFEE00000 (0x1 pages, 0x800000000000100D) skip 0<br>
+21:516 00:003 OCABC: MMIO devirt 0xFF000000 (0x1000 pages, 0x800000000000100D) skip 0<br>
+21:520 00:003 OCABC: MMIO devirt end, saved 278608 KB</li>
+</ul>
+</li>
+<li>
+<p>将 devirt 后面的 0x 60000000 等 6 组十六进制数字转换为十进制：</p>
+<ul>
+<li>MMIO devirt 0x60000000 -&gt; 1610612736</li>
+<li>MMIO devirt 0xFE000000 -&gt; 4261412864</li>
+<li>MMIO devirt 0xFEC00000 -&gt; 4273995776</li>
+<li>MMIO devirt 0xFED00000 -&gt; 4275044352</li>
+<li>MMIO devirt 0xFEE00000 -&gt; 4276092928</li>
+<li>MMIO devirt 0xFF000000 -&gt; 4278190080</li>
+</ul>
+</li>
+<li>
+<p>然后填写到 MmioWhiteList 即可：<br>
+<img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="" loading="lazy"><br>
+<img src="https://oss.heipg.cn/2020/07/1601800152-05b3745177e3350.png" alt="" loading="lazy"></p>
+</li>
+<li>
+<p>Kernel：</p>
+<ul>
+<li>AMD 系统需要<a href="https://heipg.cn/link/aHR0cHM6Ly9naXRodWIuY29tL0FNRC1PU1gvQU1EX1ZhbmlsbGEvdHJlZS9vcGVuY29yZQ==">内核补丁</a>；</li>
+<li>Intel 系统：
+<ul>
+<li>BIOS 中解锁 CFG-Lock，没有该选项的情况开启以下选项：
+<ul>
+<li>AppleXcpmCfgLock→True/Yes</li>
+<li>AppleCpuPmCfgLock→True/Yes</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>UEFI：</p>
+<ul>
+<li>Quirks
+<ul>
+<li>IgnoreInvalidFlexRatio→True/Yes
+<ul>
+<li>此项仅适用于第4代酷睿或更老平台，不适用于 AMD 和第6代酷睿及更新平台。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Output
+<ul>
+<li>ProvideConsoleGop→True/Yes
+<ul>
+<li>部分平台可能需要此项以正常过渡到下一个屏幕，此功能原是 AptioMemoryFix 的一部分，现在在 OpenCore 中则是这个 Quirk。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="q8err0xe-0-lochb-71b4903c-14ec-42c4-bdc6-ce1449930e49">Q8：Err(0xE), 0 @ LocHB 71B4903C-14EC-42C4-BDC6-CE1449930E49</h2>
+<pre><code>[EB|`B:WFDW] Err(0xE), 0 @ LocHB 71B4903C-14EC-42C4-BDC6-CE1449930E49
+[EB|#LOG:DT] 2020-03-09T09:40:46 [EB|#LOG:EXITBS:START] 2020-07-22T04:21:02
+</code></pre>
+<p>方案一：针对移动端，修改 config.plist 中</p>
+<ul>
+<li>UEFI→Quirks→IgnoreInvalidFlexRatio→True/Yes</li>
+<li>UEFI→Quirks→ReleaseUsbOwnership→True/Yes</li>
+<li>Booter→Quirks→RebuildAppleMemoryMap→False/No</li>
+<li>Booter→Quirks→SetupVirtualMap→True/Yes<br>
+方案二：针对无法解开 CFG 锁的机型，修改 config.plist 中</li>
+<li>Kernel→Quirks→AppleXcpmCfgLock→True/Yes</li>
+<li>Kernel→Quirks→AppleCpuPmCfgLock→True/Yes</li>
+<li>UEFI→Quirks→IgnoreInvalidFlexRatio→True/Yes</li>
+<li>如果无法关闭 VT-d，修改：
+<ul>
+<li>Kernel→Quirks→DisableIoMapper→True/Yes<br>
+方案三：参考 Q7。</li>
+</ul>
+</li>
+</ul>
+<h2 id="q9-eblogexitbsstart">Q9： [EB|#LOG:EXITBS:START]</h2>
+<pre><code>[EB|#LOG:EXITBS:START]
+</code></pre>
+<p>A：参考 Q7，因为基本上是同样的原因。</p>
+<h2 id="q10ioconsoleusers-time0-0-0-lin-0-llk1">Q10：IOConsoleUsers: time(0) 0-&gt;0, lin 0, llk1,</h2>
+<pre><code>IOConsoleUsers: time(0) 0-&gt;0, lin 0, llk1,
+IOConsoleUsers: gIOScreenLockState 3, hs 0, bs 0, now 0, sm 0x0
+</code></pre>
+<p>A：这个位置基本上卡在 GPU 正确初始化前，请确认以下设置：</p>
+<ul>
+<li>GPU 支持 UEFI（尤其是 GT600/GT700 以及更早期显卡）</li>
+<li>BIOS 中关闭了 CSM
+<ul>
+<li>部分笔记本机型可能无法完全关闭</li>
+</ul>
+</li>
+<li>BIOS 中设置强制 PCIe 到 3.0</li>
+<li>如果使用核显，再次检查所注入的核显 ig-platform-id 和 device-id
+<ul>
+<li>桌面端 UHD630 可以尝试 00009B3E</li>
+<li>尝试 -gfxmlr 启动参数，这可能同时可以解决“Divide by Zero”错误</li>
+<li>在 10.15.4 及以上版本 macOS 中，某些机型上的第八、九代酷睿可能需要添加启动参数 igfxonln=1</li>
+<li>更多<a href="https://heipg.cn/link/aHR0cHM6Ly9naXRodWIuY29tL2FjaWRhbnRoZXJhL1doYXRldmVyR3JlZW4vYmxvYi9tYXN0ZXIvTWFudWFsL0ZBUS5JbnRlbEhELmVuLm1k">参阅 WhateverGreen 补丁</a></li>
+</ul>
+</li>
+</ul>
+<p>启动界面&amp;代码界面部分</p>
+<h2 id="q10启动界面看不到-macos-启动分区">Q10：启动界面看不到 macOS 启动分区</h2>
+<p>A：首先确认 /EFI/OC/Drivers 目录下有 HFSPlus.efi；<br>
+修改 config.plist：<br>
+Misc→Security→Scan Policy→设置为 0<br>
+UEFI→Quirks→UnblockFsConnet→True/Yes（部分惠普机型需要）<br>
+UEFI→APFS→EnableJumpStart→True/Yes<br>
+UEFI→APFS→HideVerbose→True/Yes<br>
+UEFI→APFS→MinDate→ -1<br>
+UEFI→APFS→MinVersion→ -1</p>
+<h2 id="q11选择启动项后黑屏">Q11：选择启动项后黑屏</h2>
+<p>A：修改 config.plist：<br>
+UEFI→Output→ProvideConsoleGop→True/Yes<br>
+Booter→Quirks→RebuildAppleMemoryMap→True/Yes<br>
+如果未能解决问题，请使用 Debug 版本 OpenCore，这样会提示更多信息。</p>
+<h2 id="q12如何将-opencore-设置成图形化启动界面">Q12：如何将 OpenCore 设置成图形化启动界面？</h2>
+<p>A：以下方法适用于 OpenCore 0.7.0 及以上。修改 config.plist：</p>
+<ul>
+<li>Misc
+<ul>
+<li>Boot
+<ul>
+<li>Picker Mode → External</li>
+<li>Picker Attribute GUI → 1</li>
+<li>Show Picker → True/Yes</li>
+<li>PickerVariant → Acidanthera\GoldenGate （或其它你下载的主题）</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>UEFI
+<ul>
+<li>Drivers
+<ul>
+<li>加载 OpenCanopy.efi<br>
+下载 OcBinaryData，<a href="https://heipg.cn/link/aHR0cHM6Ly9naXRodWIuY29tL2FjaWRhbnRoZXJhL09jQmluYXJ5RGF0YQ==">点此直达官方地址</a>；或下载黑苹果星球整理的文件包：</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="q13如何固定选择启动项">Q13：如何固定选择启动项？</h2>
+<p>A：修改 config.plist：<br>
+Misc→Security→AllowSetDefault→True/Yes<br>
+在启动界面选择想要设置的项，按下 Ctrl + Enter，即可。</p>
+<h2 id="q14ocb-ocscanforbootentries-failure-not-found">Q14：OCB: OcScanForBootEntries failure - Not Found</h2>
+<pre><code>OCB: OcScanForBootEntries failure - Not Found
+</code></pre>
+<p>A：这是由于 OpenCore 无法根据当前的 ScanPolicy 设置找到任何驱动器，此项设置为 0 将允许显示所有引导选项<br>
+修改 config.plist：Misc→Security→ScanPolicy→ 0</p>
+<h2 id="q15ocb-failed-to-match-a-default-boot-option">Q15：OCB: failed to match a default boot option</h2>
+<pre><code>OCB: failed to match a default boot option
+</code></pre>
+<p>A：原因及解决方法同 Q14。</p>
+<h2 id="q16ocb-startimage-failed-aborted">Q16：OCB: StartImage failed - Aborted</h2>
+<pre><code>OCB: StartImage failed - Aborted
+Halting on critical error
+</code></pre>
+<p>A：请升级 OpenCore 到 0.5.9 及更高版本，这主要是由错误的编译或文件版本不对应造成。<br>
+OpenCore 的关键文件必须来自同一版本：BOOTx64.efi、OpenCore.efi、OpenRuntime.efi、OpenCanopy.efi（用于支持官方主题服务）</p>
+<h2 id="q17-forcing-cs_runtime-for-entitlement-comapplerootlessrestricted-block-devices">Q17: Forcing CS_RUNTIME for entitlement: com.apple.rootless.restricted-block-devices</h2>
+<pre><code>Forcing CS_RUNTIME for entitlement: com.apple.rootless.restricted-block-devices
+</code></pre>
+<p>A：这个一般出现在安装 macOS 11.0 Big Sur 的过程中，其实并没有卡住，注意观察硬盘灯，耐心等待，一般3-5分钟就会过。</p>
+<h2 id="q18setmulticastlist">Q18：SetMulticastList() ===&gt;</h2>
+<pre><code>SetMulticastList() \=\=\=&gt;
+SetMylticastList() &lt;\=\=\=
+</code></pre>
+<p>A：同 Q17。</p>
+<h2 id="q19ocbocscwfurbootentries-failure-not-found">Q19：OCB：OcScwfurBootEntries failure - not found</h2>
+<pre><code>OCB：OcScwfurBootEntries failure - not found
+Halting on critical error
+</code></pre>
+<p>A：配置文件有错误，建议重新新建 config.plist。注：此错误新手遇到比较多，请注意 OpenCore 和 Clover 的 config 文件并不通用！</p>
+<h2 id="q20error-allocating-0x3362-pages-at-0x0000000001033000-alloc-type-2">Q20：ERROR allocating 0x3362 pages at 0x0000000001033000 alloc type 2</h2>
+<pre><code>ERROR allocating 0x3362 pages at 0x0000000001033000 alloc type 2 
+Error loading kernel cache (0x9) 
+Halting on critical error
+</code></pre>
+<p>A：原因一般是在 /EFI/OC/Drivers 目录下引入了很多 Clover 使用的 .efi 文件。并不是 Clover 适用的 .efi 文件 OpenCore 也适用，具体看：<a href="https://heipg.cn/tutorial/what-is-efi-file.html">.efi 文件说明</a><br>
+解决办法是删除 Clover 使用的 .efi 文件，OpenCore 最基础只需保留 HfsPlus.efi，OpenRuntime.efi，OpenCanopy.efi（用于支持官方主题），其余都删除。</p>
+<h2 id="q21ocsno-schema-for-disabled-at-12-index">Q21：OCS：No schema for Disabled at 12 index</h2>
+<pre><code>OCS：No schema for Disabled at 12 index
+OC：Driver HfaPlus.efi at 0 cannot be found!
+Halting on critical error
+</code></pre>
+<p>A：默认的 OpenCore 不含 HFSPlus.efi 文件，需要添加到 /EFI/OC/Drivers 目录下。</p>
+<h2 id="q22ocbstartimage-failed-already-started">Q22：OCB：StartImage failed - Already started</h2>
+<pre><code>OCB：StartImage failed - Already started
+Halting on critical error
+</code></pre>
+<p>A：一般发生在引导项选择时选择了 EFI 分区。解决方法：不要选择 EFI 分区，请直接选择系统分区。</p>
+<h2 id="q23ocui-failed-to-load-images">Q23：OCUI: Failed to load images</h2>
+<pre><code>OCUI: Failed to load images
+Halting on critical error
+</code></pre>
+<p>A：开启了 OpenCore 的 UI 界面，但是没有配置 OC 的 Resource 文件，请下载并到 /EFI/OC/Resource/ 文件。<br>
+下载 OcBinaryData，<a href="https://heipg.cn/link/aHR0cHM6Ly9naXRodWIuY29tL2FjaWRhbnRoZXJhL09jQmluYXJ5RGF0YQ==">点此可直达官方地址</a>；或下载黑苹果星球整理的文件包：</p>
+<h2 id="q24卡在主板-logo-界面">Q24：卡在主板 LOGO 界面</h2>
+<p>A：常见于 GA 主板，修改 config.plist→UEFI→Drivers 取消 AudioDxe.efi，删除或在名称前添加 # 号，暂时禁用。另一种方案，断电并拔掉电池静置 5-10 分钟，再开机。</p>
+<h2 id="q25oc-invalid-vault-mode">Q25：OC: Invalid Vault mode!</h2>
+<pre><code>OC: Invalid Vault mode!
+</code></pre>
+<p>A：修改 config.plist 中：<br>
+Misc→Security→Vault→Optional<br>
+大概率是拼写错误，将 Vault 值设置为 Optional，注意大小写敏感。</p>
+<h2 id="q26oc-ocapplegenericinputtimerquirkexit-status">Q26：OC: OcAppleGenericInputTimerQuirkExit Status</h2>
+<pre><code>OC: OcAppleGenericInputTimerQuirkExit Status - Success
+OC: OcAppleGenericInputKeycodeExit Status - Success
+</code></pre>
+<p>A：解决方法：</p>
+<ul>
+<li>Intel：
+<ul>
+<li>BIOS 中解锁 CFG-Lock，没有该选项的情况开启以下选项：
+<ul>
+<li>AppleXcpmCfgLock→True/Yes</li>
+<li>AppleCpuPmCfgLock→True/Yes</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>AMD 系统需要<a href="https://heipg.cn/link/aHR0cHM6Ly9naXRodWIuY29tL0FNRC1PU1gvQU1EX1ZhbmlsbGEvdHJlZS9vcGVuY29yZQ==">内核补丁</a>；<br>
+如果未能解决问题，请使用 Debug 版本 OpenCore，这样会提示更多信息。</li>
+</ul>
+<h2 id="q27ocabc-memory-pool-allocation-failure-not-found">Q27：OCABC: Memory pool allocation failure - Not Found</h2>
+<pre><code>OCABC: Memory pool allocation failure - Not Found
+</code></pre>
+<p>A：这是由于错误的 BIOS 设置 和/或 错误的 Booter Quirks 值，请确认 Booter→Quirks 设置正确，并验证 BIOS 设置：</p>
+<ul>
+<li>开启 Above 4G Decoding</li>
+<li>关闭 CSM</li>
+<li>升级 BIOS 到最新版本</li>
+</ul>
+<h2 id="q28ocs-no-schema-for-dsdt-kernelandkextpatch-rtvariable-smbios-systemparameters">Q28：OCS: No schema for DSDT, KernelAndKextPatch, RtVariable, SMBIOS, SystemParameters</h2>
+<pre><code>OCS: No schema for DSDT, KernelAndKextPatch, RtVariable, SMBIOS, SystemParameters...
+</code></pre>
+<p>A：这基本上是配置文件结构不正确造成的，请勿使用 Clover 的 config.plist 引导 OpenCore，以及版本不匹配的 OpenCore Configurator 配置 config.plist。<br>
+建议是，能学会树形目录编辑器就尽量学，例如 <a href="https://heipg.cn/apps/propertree-for-plist-editting.html">ProperTree</a>。</p>
+<h2 id="q29apfs_module_start">Q29：apfs_module_start</h2>
+<pre><code>apfs_module_start
+</code></pre>
+<p>A：卡在这个位置大部分都是 Z390 主板，需要添加一个 ACPI 补丁，内容如下：<br>
+Comment: 	Fix RTC _STA bug<br>
+Find: 		A00A9353 54415301<br>
+Replace: 	A00A910A FF0BFFFF</p>
+<h2 id="q30ocbloadimage-failed-unsupported">Q30：OCB：LoadImage failed - Unsupported</h2>
+<pre><code>OCB：LoadImage failed - Unsupported
+Halting on critical error
+</code></pre>
+<p>A：一般发生在进入 Recovery 时。解决方法是在 /EFI/OC/Drivers/ 目录下添加 HFSPlus.efi 或 VBoxHfs.efi，一般使用前者。</p>
+<h2 id="q31appleusbxhciinterruptoccurred-clearing-change-bits-on-unused-port">Q31：AppleUSBXHCI::interruptOccurred: clearing change bits on unused port...</h2>
+<pre><code>000340.041303 XHCI@14000000: AppleUSBXHCI::interruptOccurred: clearing change bits on unused port 23 with portSC 0x802a0
+000341.204285 XHCI@14000000: AppleUSBXHCI::interruptOccurred: clearing change bits on unused port 24 with portSC 0x802a0
+000341.227434 XHCI@14000000: AppleUSBXHCI::interruptOccurred: clearing change bits on unused port 25 with portSC 0x221203
+000341.250544 XHCI@14000000: AppleUSBXHCI::interruptOccurred: clearing change bits on unused port 26 with portSC 0x802a0
+...
+...
+IOUSBHost Interface(0x10000063d): matching deferred by IOUSBHostHIDDevice
+</code></pre>
+<p>A：一般是因为缺少 ACPI 补丁，没有正确驱动 USB 的 XHCI 节点。可尝试以下 ACPI 补丁：<br>
+Comment: Rename XHCI to XHC(USB)<br>
+Find: 58484349<br>
+Replace: 5848435F</p>
+<pre><code>Comment: Rename XHC1 to XHC(USB)
+Find: 58484331
+Replace: 5848435F
+</code></pre>
+<p>其它解决办法：</p>
+<ul>
+<li>检查镜像 md5；</li>
+<li>将 U 盘换到 USB2.0 或 USB3.1 的接口；</li>
+<li>添加解除 15 端口限制的补丁，或修改 config.plist→Kernel→Quirks→XhciPortLimit</li>
+</ul>
+<h2 id="q32vm-swap-subsystem-is-on">Q32：VM Swap Subsystem is ON</h2>
+<pre><code>VM Swap Subsystem is ON
+</code></pre>
+<p>A：修改 config.plist<br>
+Kernel→Quirks→ThirdPartyDrivers→ Off/False</p>
+<h2 id="q33kernel-extensions-in-backtrace">Q33：Kernel Extensions in backtrace</h2>
+<pre><code>Kernel Extensions in backtrace：
+    com.apple.iokit.IOPCIFamily(2.9)[ADD485B5-3EF8-37C4-B3C5-F86326E497A4]@0xffffff7f9432f000-&gt;0xfffffff7f94365fff
+    com.apple.driver.AppleACPIPlatform(6.1)[C111AA1C-DE22-39CC-BB44-4870383DDAA0]@0xffffff7f96306000-&gt;0xffffff7f963a0fff
+        dependency: com.apple.iokit.IOACPIFamily(1.4)...
+        dependency: com.apple.iokit.IOPCIFamily(2.9)...
+        dependency: com.apple.driver.AppleSMC(3.1.9)...
+com.apple.driver.AppleIntelCFLGraphicsFramebuffer(14.0.4)[...]@...
+</code></pre>
+<p>A：这个错误基本是是由 Framebuffer 设置不当造成的，例如7代酷睿使用了9代酷睿的核显 Framebuffer。<br>
+解决方法：修改合适的核显 Framebuffer 信息，可先删除 DeviceProperties 下有关核显的数值。其它参考：<a href="https://heipg.cn/tutorial/patching-intel-igpu-for-hackintosh.html">驱动 Intel 核显</a>。</p>
+<h2 id="q34ocsb-no-suitable-signature-security-violation">Q34：OCSB: No suitable signature - Security Violation</h2>
+<pre><code>OCSB: No suitable signature - Security Violation
+OCB: Apple Secure Boot prohibits this boot entry, enforcing!
+OCB: LoadImage failed - Security Violation
+</code></pre>
+<p>A：这是由于过时的 Apple Secure Boot manifests 导致的，如果你在 OpenCore 中设置了 SecureBootModel，就会导致加载失败，这些文件丢失的原因实际上是 macOS 中的 BUG。解决方法（任选其一）：</p>
+<ol>
+<li>Misc→Security→SecureBootModel→ Default 或 Disabled</li>
+<li>重新安装 macOS 到最新版本</li>
+<li>从 /usr/standalone/i386 拷贝 Secure Boot manifests 到 /Volumes/Preboot/<UUID>/System/Library/CoreServices</li>
+</ol>
+<h2 id="q35ebldofs-err0xe-open">Q35：[EB|`LD:OFS] Err(0xE) @ OPEN</h2>
+<pre><code>[EB|`LD:OFS] Err(0xE) @ OPEN
+(System\\Library\\PrelinkedKernels\\prelinkedkernel)
+</code></pre>
+<p>A：当 Preboot 未被正确更新时，可能会发生这种情况。解决此问题：</p>
+<ul>
+<li>
+<p>修改 config.plist→UEFI→APFS→JumpstartHotplug→True（macOS 11.0 可能必须开启此项才能进入 Recovery）</p>
+</li>
+<li>
+<p>重启，引导进入 Recovery</p>
+</li>
+<li>
+<p>开启终端，进行如下操作：</p>
+</li>
+<li>
+<p>通过列出所有分区找到 Preboot 分卷</p>
+<p>diskutil list</p>
+<p>在列出的列表中，我们发现 Preboot 分卷是 disk5s2</p>
+<p>/dev/disk5 (synthesized):<br>
+#:                       TYPE NAME                    SIZE       IDENTIFIER<br>
+0:      APFS Container Scheme -                      +255.7 GB   disk5<br>
+Physical Store disk4s2<br>
+1:                APFS Volume ⁨Big Sur HD - Data⁩       122.5 GB   disk5s1<br>
+2:                APFS Volume ⁨Preboot⁩                 309.4 MB   disk5s2<br>
+3:                APFS Volume ⁨Recovery⁩                887.8 MB   disk5s3<br>
+4:                APFS Volume ⁨VM⁩                      1.1 MB     disk5s4<br>
+5:                APFS Volume ⁨Big Sur HD⁩              16.2 GB    disk5s5<br>
+6:              APFS Snapshot ⁨com.apple.os.update-...⁩ 16.2 GB    disk5s5s</p>
+</li>
+<li>
+<p>现在挂载指定的 Preboot 分卷<br>
+diskutil mount disk5s2</p>
+</li>
+<li>
+<p>最后执行下面的命令来更新 Preboot 分卷<br>
+diskutil apfs updatePreboot /volume/disk5s2</p>
+</li>
+<li>
+<p>最后重启，注意你可能需要关闭 JumpstartHotplug。</p>
+</li>
+</ul>
+<h2 id="q36ocs-no-schema-for-enableforall-at-0-index">Q36：OCS: No schema for EnableForAll at 0 index</h2>
+<pre><code>OCS: No schema for EnableForAll at 0 index, context &lt;Quirks&gt;!
+OCS: No schema for EnableForAll at 5 index, contextr &lt;Quirks&gt;!
+OCS: No schema for DummyPowerManagement at 8 index, context &lt;Quirks&gt;!
+OCS: No schema for SkipCustomEtryCheck at 8 index, context &lt;Boot&gt;!
+</code></pre>
+<p>A：和其它升级 OpenCore 的问题一样，这一般是从 0.6.1 升级到 0.6.2，替换了文件却没有用新版 Sample.plist 重建 config.plist 造成的。解决的办法有两个：</p>
+<ul>
+<li>使用 0.6.2 版本的 Sample.plist 重建 config.plist；</li>
+<li>使用 BeyondCompare 等代码对比工具查找两个版本 Sample.plist 的不同之处，然后使用 VScode 等代码编辑器工具修正 0.6.1 版的 config.plist</li>
+</ul>
+<h2 id="q37oc-driver-audiodxeefi-at-0-cannot-be-found">Q37：OC: Driver AudioDxe.efi at 0 cannot be found!</h2>
+<pre><code>OC: Driver AudioDxe.efi at 0 cannot be found!
+Halting on critical error
+</code></pre>
+<p>A：在 config.plist 中指定了加载某些文件，实际路径里却不存在。只是此问题指的是 .efi 驱动。此案例中，请检查 /EFI/OC/Driver/ 目录下是否存在 AudioDxe.efi，不存在的话请添加。如果不想要这个驱动的话，请在 config.plist → UEFI → Drivers 中取消该文件，其它情况以此类推。</p>
+<h2 id="q38osxaptiofix3drv-starting-overrides-for-systemlibrarycoreservicesbootefi">Q38：OsxAptioFix3Drv: Starting overrides for \System\Library\CoreServices\boot.efi</h2>
+<pre><code>OsxAptioFix3Drv: Starting overrides for \System\Library\CoreServices\boot.efi
+Using reloc block: no, hibernate wake: no
+ERROR allocating 0x1c19 pages at 0x0000000009433000 alloc type 2
+Error loading kernel cache (0x9)
+Boot failed; will sleep for 10 seconds before exiting...
+Error: Aborted returrned from boot.efi
+
+ was error, press any key
+
+* Hit any key to continue *
+</code></pre>
+<p>A：如果是 OpenCore，请不要使用 OsxAptioFix3Drv.efi 或其它类似的内存修复驱动，因为 OpenCore 已经自备了 OpenRuntime.efi 来解决内存问题。如果是 Clover，r5120 以下版本请使用 AptioMemoryFix.efi，r5120 及以上版本使用 OcQuirks.efi。</p>
+<h2 id="q39failed-to-parse-real-field-of-type-1">Q39：Failed to parse real field of type 1</h2>
+<pre><code>Failed to parse real field of type 1
+</code></pre>
+<p>A：此错误一般是因为使用了 Xcode 造成，Xcode 把 HaltLevel 的 integer 值类型自动改成了 real，解决办法是不要使用 Xcode，把 HaltLevel 下的数字值类型修改回 integer：<br>
+#以下是错误的<br>
+<key>HaltLevel</key><br>
+<real>2147483648</real></p>
+<pre><code>\#修正为
+&lt;key&gt;HaltLevel&lt;/key&gt;
+&lt;integer&gt;2147483648&lt;/integer&gt;
+</code></pre>
+<h2 id="q40generation-from-smc-report-as-2">Q40：Generation from SMC report as 2</h2>
+<pre><code>Generation from SMC report as 2
+AppleLMUController::smcGetKey Info Error: received error 0x84 when getting key info for 'ALRV'
+AppleLMUController::smcReadKey Error:received error 0×84 when reading key 'MSLD'
+AppleLMUController::smcReadKey Error:received error 0×84 when reading key 'ALV0'
+</code></pre>
+<p>​<br>
+A：此错误一般 ssdt 相关，主要表现在笔记本机型上。在此案例中，当用户设备中具备 ACPI0008 (Light Sensor device) 时，macOS 会启动 AppleSMCLMU.kext 与该设备匹配并且需要 LightSensor 的 SMC 密钥。因此，删除 SSDT-ALS0.aml，或进一步补充 ssdt 内容完全屏蔽该设备，一般即可解决该问题。</p>
+<h2 id="q41ioconsoleusers-gioscreenlockstate-3">Q41：IOConsoleUsers: gIOScreenLockState 3</h2>
+<pre><code>IOConsoleUsers: gIOScreenLockState 3, hs 0, bs 0, now 0, sm 0x0
+之后黑屏
+</code></pre>
+<p>A：如果是 Navi 系显卡（RX5500/5600/5700/XT）</p>
+<ul>
+<li>添加启动参数 agdpmod=pikera</li>
+<li>可尝试切换到 MacPro7,1 ，启动参数修改为 agdpmod=ignore</li>
+<li>如果是微星的 Navi 显卡，可能需要添加以下补丁，位于 Kernel → Patch：<br>
+Base:<br>
+Comment: Navi VBIOS Bug Patch<br>
+Count: 1<br>
+Enabled: YES<br>
+Find: 4154592C526F6D2300<br>
+Identifier: com.apple.kext.AMDRadeonX6000Framebuffer<br>
+Limit: 0<br>
+Mask:<br>
+MinKernel: 19.00.00<br>
+MaxKernel: 19.99.99<br>
+Replace: 414D442C526F6D2300<br>
+ReplaceMask:<br>
+Skip: 0</li>
+</ul>
+<h2 id="q42-kernel-panic-cannot-perform-kext-summary">Q42： Kernel Panic: Cannot perform kext summary</h2>
+<pre><code>Kernel Panic: Cannot perform kext summary
+Kernel Panic: Invalid frame pointer
+</code></pre>
+<p>A：一般情况下此时已经内核崩溃了（Kernel Panic），通常是预链接内核相关的问题造成的，尤其是 macOS 很难理解引导工具注入的内容。通过以下步骤验证：</p>
+<ul>
+<li>Kext 加载顺序正确（没错，顺序也是重要的），Lilu.kext 必须、务必，一定排在其它所有 kext 之前；其它 kext，必须先是主插件（如 VirtualSMC），然后是它的卫星插件（如 SuperIO）</li>
+<li>大部分的 Kext 拥有可执行文件（位于 kext 内部的 Executable），剩下的 Kext 只有 plist 但是没有包含可执行文件（例如 USBPort.kext、XHCI-unspported.kext 等）</li>
+<li>不要在 config.plist 中添加多个相同的 Kext（例如，VoodooPS2Controller 中包含 VoodooInput，所以不要再单独添加）</li>
+<li>此类错误也可能会造成 Invalid frame pointer 一类的内核崩溃</li>
+</ul>
+<h2 id="q43kernel-panic-invalid-frame-pointer">Q43：Kernel Panic: Invalid frame pointer</h2>
+<pre><code>Kernel Panic: Invalid frame pointer
+</code></pre>
+<p>A：此部分大概率和 Booter → Quirks 相关，此部分主要和内存相关，主要涉及以下几个选项：</p>
+<ul>
+<li>
+<p>DevirtualiseMmio</p>
+<ul>
+<li>部分硬件平台并不能很好的适应这个 Quirk，例如部分 Z390 和绝大部分的 X99 和 X299。它的工作方式是占用 MMIO 区域并删除运行时属性，使它们可用作存放内核的空间，注意这个 Quirk 在绝大部分的系统上并不要求一定要填写 MmioWhiteList，但在某些非常难安装的平台（例如：线程撕裂者 TRX40 19H 或 10300H），在启用此 Quirk 的同时还需设置 MmioWhiteList，使用 Debug 版 OpenCore 并开启 DevirtualiseMmio，你会在日志中找到类似以下内容：<br>
+21:495 00:009 OCABC: MMIO devirt start<br>
+21:499 00:003 OCABC: MMIO devirt 0x60000000 (0x10000 pages, 0x8000000000000001) skip 0<br>
+21:503 00:003 OCABC: MMIO devirt 0xFE000000 (0x11 pages, 0x8000000000000001) skip 0<br>
+21:506 00:003 OCABC: MMIO devirt 0xFEC00000 (0x1 pages, 0x8000000000000001) skip 0<br>
+21:510 00:003 OCABC: MMIO devirt 0xFED00000 (0x1 pages, 0x8000000000000001) skip 0<br>
+21:513 00:003 OCABC: MMIO devirt 0xFEE00000 (0x1 pages, 0x800000000000100D) skip 0<br>
+21:516 00:003 OCABC: MMIO devirt 0xFF000000 (0x1000 pages, 0x800000000000100D) skip 0<br>
+21:520 00:003 OCABC: MMIO devirt end, saved 278608 KB</li>
+</ul>
+</li>
+<li>
+<p>将 devirt 后面的 0x 60000000 等 6 组十六进制数字转换为十进制：</p>
+<ul>
+<li>MMIO devirt 0x60000000 -&gt; 1610612736</li>
+<li>MMIO devirt 0xFE000000 -&gt; 4261412864</li>
+<li>MMIO devirt 0xFEC00000 -&gt; 4273995776</li>
+<li>MMIO devirt 0xFED00000 -&gt; 4275044352</li>
+<li>MMIO devirt 0xFEE00000 -&gt; 4276092928</li>
+<li>MMIO devirt 0xFF000000 -&gt; 4278190080</li>
+</ul>
+</li>
+<li>
+<p>然后填写到 MmioWhiteList 即可：<br>
+<img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="" loading="lazy"><br>
+<img src="https://oss.heipg.cn/2020/07/1601800152-05b3745177e3350.png" alt="" loading="lazy"></p>
+</li>
+<li>
+<p>SetupVirtualMap</p>
+<ul>
+<li>大多数主板都需要开启这个 Quirks，如果没有开启，内核崩溃会很常见；</li>
+<li>但是，部分主板却无法使用它，并且可能导致内核崩溃：
+<ul>
+<li>Intel Ice Lake 系列（十代酷睿移动端，例如 1035G1）</li>
+<li>Intel Comet Lake 系列（十代酷睿桌面端，例如 i5-10400）</li>
+<li>AMD B550</li>
+<li>AMD A520</li>
+<li>AMD TRx40</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>另一个问题可能是 macOS 与 CR0 寄存器的写保护冲突，要解决此问题，需要先确认你的主板是否有 MAT 支持，此部分参考 Q23；</p>
+<ul>
+<li>确定有 MAT 支持时：
+<ul>
+<li>EnableWriteUnprotector -&gt; False</li>
+<li>RebuildAppleMemoryMap -&gt; True</li>
+<li>SyncRuntimePermissions -&gt; True</li>
+</ul>
+</li>
+<li>当没有 MAT 支持时：
+<ul>
+<li>EnableWriteUnprotector -&gt; True</li>
+<li>RebuildAppleMemoryMap -&gt; False</li>
+<li>SyncRuntimePermissions -&gt; False</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="q44kernel-panic-appleintelmcereporter">Q44：Kernel Panic: AppleIntelMCEReporter</h2>
+<pre><code>Kernel Panic: AppleIntelMCEReporter
+</code></pre>
+<p>A：在 macOS Catalina 处理器双插槽支持被损坏，但部分 AMD 主板的固件会报告已接入多插槽处理器，因此 macOS 内置的 AppleIntelMCEReporter.kext 会造成内核崩溃。此问题通常出现在 AMD 处理器的机型上，有两种解决办法，添加一个第三方 Kext：<a href="https://heipg.cn/tag/driver-package">AppleMCEReporterDisabler.kext</a>；或编辑 config.plist，使用 Kernel → Block 功能阻止 macOS 加载 AppleIntelMCEReporter.kext（识别符：com.apple.driver.AppleTyMCEDriver，OpenCore 默认配置文件 Sample.plist 中有提供）。</p>
+<h2 id="q45smclightsensor-alsd-no-iterator">Q45：SMCLightSensor alsd: @ No iterator</h2>
+<pre><code>SMCLightSensor alsd: @ No iterator
+AppleIntelLpssI2CController::_serviceMatchingTimeSubr: fTimerServiceMatching timed out, fNotifications 0
+AppleIntelLpssI2CController::_serviceMatchingTimeSubr: fTimerServiceMatching timed out, fNotifications 0
+</code></pre>
+<p>A：此错误分两个部分，第一部分，LightSensor 没有匹配到可用的光传感器，这可能是你的笔记本没有，或不被支持，可先暂时关闭 SMCLightSensor.kext；第二部分，I2C 服务匹配超时，这可能是 macOS 内置的 I2C 控制程序无法匹配你的设备，解决方法，在 config.plist → Kernel → Block 中添加以下内容，并使用 VoodooI2C.kext 替代：<br>
+Comment: Prevent Apple I2C kexts from attaching to I2C controllers<br>
+Enabled: YES<br>
+Identifier: com.apple.driver.AppleIntelLpssI2C</p>
+<pre><code>Comment: Prevent Apple I2C kexts from attaching to I2C controllers
+Enabled: YES
+Identifier: com.apple.driver.AppleIntelLpssI2CController
+</code></pre>
+<h2 id="q46选择-macos-recovery-后提示ocb-loadimage-failed-not-found">Q46：选择 macOS Recovery 后，提示OCB: LoadImage failed - Not Found</h2>
+<pre><code>OCB: LoadImage failed - Not Found
+</code></pre>
+<p>A：修改 config.plist 中 Misc → Security → DmgLoading → Any/Signed，建议修改为 Any。</p>
+<h2 id="q47启动时-kernel-panic">Q47：启动时 Kernel Panic：</h2>
+<pre><code>Kernel Extension in backtrace:
+    com.apple.iokit.IOPCIFamily(2.9)[ xxxx...
+    com.apple.driver.AppleACPIPlatform(6.1)[ xxxx...
+        dependency: com.apple.driver.AppleSMC(3.1.9)[ xxxx...
+        dependency: com.apple.iokit.IOACPIFamily(1.4)[ xxxx...
+        dependency: com.apple.iokit.IOPCIFamily(2.9)[ xxxx....
+</code></pre>
+<p>A：可能有多种情况会遇到这个内核崩溃，这里主要讲解 X79 和 X99 平台，起因是苹果在 macOS Big Sur 修改了大部分 IOPCIFamily.kext 中的内容，因此造成的部分机型遭遇内核崩溃。由于目前（2021/6/16） Big Sur 还没有源码放出，如果没有反汇编大佬进行调试，则无从知晓真正的原因。可以考虑解决的办法如下：</p>
+<ul>
+<li>X79/X99/X299 平台务必加上 npci=0x2000 或 npci=0x3000 这个启动参数；</li>
+<li>尝试 SSDT-RTC0-RANGE.aml 或 SSDT-UNC.aml 这两个 ACPI 补丁，可以从 <a href="https://heipg.cn/link/aHR0cHM6Ly9naXRodWIuY29tL2FjaWRhbnRoZXJhL09wZW5Db3JlUGtnL3RyZWUvbWFzdGVyL0RvY3MvQWNwaVNhbXBsZXMvU291cmNl">OC 团队的开发堆栈</a>里找到源文件；</li>
+</ul>
+<h2 id="q48跑码过程中出现禁止符号然后字符变成乱码如下">Q48：跑码过程中出现禁止符号，然后字符变成乱码，如下：</h2>
+<p><img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="" loading="lazy"><br>
+<img src="https://oss.heipg.cn/2020/07/1626016354-3c5d4869fc9bba0.jpg" alt="" loading="lazy"><br>
+A：此错误源头和 USB 强相关。首先检查 BIOS 设置：</p>
+<ul>
+<li>开启 USB XHCI Handoff 和 Legacy USB Support，如果安装到 SATA 接口硬盘，把 SATA 模式设置为 AHCI；<br>
+接下来有两种选择：</li>
+<li>第一种是把 U 盘插到纯 2.0 接口（外观上一般为黑色 4 针）；</li>
+<li>第二种是先在 Windows 对 USB 接口进行定制，具体原因和方法见「<a href="https://heipg.cn/tutorial/customize-usb-port-windows.html">黑苹果 Windows 定制 USB</a>」，完成后使用定制好的 USB 文件再尝试安装；</li>
+</ul>
+<h2 id="q49安装-macos-big-sur-113-及以上版本时跑完进度条后见到如下界面">Q49：安装 macOS Big Sur 11.3 及以上版本时，跑完进度条后见到如下界面：</h2>
+<p><img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="" loading="lazy"><br>
+<img src="https://oss.heipg.cn/2020/07/1626017111-8a3564257192b0b.jpg" alt="" loading="lazy"><br>
+A：此问题的源头来自 macOS 系统本身。苹果自 macOS Big Sur 11.3 开始修改了 USB 映射方式，导致 OpenCore 依赖的 Quirks 特性 XhciLimitPort 失效（Clover 自 r5123 开始完全是 OC 内核，因此同理）。截止 OpenCore 0.7.6 开发版，Acidanthera 团队仍未修复，估计也不太可能修复了。<br>
+简单来说，就是此时 macOS 没有找到任何键盘/鼠标/妙控板等操控设备，它以为自己运行在白苹果电脑上，于是提示用户打开秒控鼠标/妙控板的开关。至于没有检测到的原因就说来话长了，具体可参考「<a href="https://heipg.cn/tutorial/customize-usb-port-windows.html">黑苹果 Windows 定制 USB</a>」的前言部分。<br>
+知道原因后解决问题就比较简单，把你的鼠标键盘插到纯 USB2.0 接口（外观上一般为黑色 4 针）即可，有的机型甚至重新插拔一下都可以。进入系统后建议优先考虑定制 USB 接口。</p>
+<h2 id="q50ifnet_attach-all-kernel-threads-created-for-interface-en0-have-been-scheduled-at-least-once-proceeding">Q50：ifnet_attach: All kernel threads created for interface en0 have been scheduled at least once. Proceeding.</h2>
+<pre><code>ifnet_attach: All kernel threads created for interface en0 have been scheduled at least once. Proceeding.
+_dlil_attach_flowswitch_nexus: en0 9000 1500
+IOKit Daemon (kernelmanagerd) stall[0], (240s): 'PXSX'
+</code></pre>
+<p>A：通常情况下，此情况会出现在安装 macOS Big Sur，问题的源头是因为 Big Sur 完全删除了类 AirPortBrcm4360，为了兼容这个情况，acidanthera 团队从 Airportbrcmfixup.kext 中单独剔出了AirPortBrcm4360 和 AirPortBrcmNIC 注入器（injector），在安装 Big Sur 并使用 Airportbrcmfixup.kext 时，必须不能加载 AirPortBrcm4360_Injector.kext（或为其设置 MaxKernel 值 19.9.9）。<br>
+如果你的无线博通网卡是免驱动类型时（例如奋威 T919 或型号较新的苹果原装拆机卡），则完全不需要使用 Airportbrcmfixup.kext。</p>
+<h2 id="q51关于-120-的无线和蓝牙驱动">Q51：关于 12.0 的无线和蓝牙驱动</h2>
+<p>macOS Monterey 12.0 大幅修改了蓝牙和无线网卡的驱动框架，一是因为抛弃了 2015 年以前推出的机型支持，二是为通用控制做准备。虽然黑苹果老卡可以通过第三方驱动得到支持，但是在设置上和以往有一些区别。简单来说就是以下几点：</p>
+<ul>
+<li>除免驱卡外（例如奋威 T919 或其它型号较新的苹果原装拆机卡），必须使用新驱动 <a href="https://heipg.cn/tag/bluetoolfixup">BlueToolFixup.kext</a>；</li>
+<li>蓝牙驱动 BrcmPatchRAM 中的注入器（BrcmBluetoothInjector.kext），不能在 12.0 中启用，会卡住。可以删除或不启用，如果你有切换多个版本系统的需求，OpenCore 还可设置 MaxKernel 值 20.99.99 ，Clover 则需要建立不同版本号的 Kext 目录下的文件夹；</li>
+<li>英特尔网卡，需要将 IntelBluetoothFirmware 升级到最新，同样不能使用 IntelBluetoothInjector.kext；</li>
+<li>其它可参考「<a href="https://heipg.cn/tutorial/fix-bluetooth-macos-12-0-monterey.html">修复蓝牙在 macOS 12.0 Monterey 的方法</a>」；</li>
+</ul>
+<p>其他部分</p>
+<h2 id="q52如何关闭-opencore-输出到-esp-分区下的日志文件">Q52：如何关闭 OpenCore 输出到 ESP 分区下的日志文件？</h2>
+<p>A：修改 config.plist<br>
+Misc→Debug→Target→ 0</p>
+<ul>
+<li>0：关闭日志记录</li>
+<li>3：允许屏幕输出日志</li>
+<li>19：允许屏幕输出 UEFI 变量日志</li>
+<li>65：在 ESP 分区根目录生成日志文件 opencore-年-月-日-时分秒.txt，但屏幕上不显示日志</li>
+</ul>
+<h2 id="q53macos-安装界面是俄语">Q53：macOS 安装界面是俄语？</h2>
+<p>修改 config.plist：<br>
+NVRAM → 7C436110-AB2A-4BBB-A880-FE41995C9F82 → prev-lang:kbd</p>
+<ul>
+<li>改类型为 data 值，内容为 7A682D48 616E773A 323532</li>
+<li>或类型为 string 值，内容为 zh-Hans:252</li>
+</ul>
+<h2 id="q54硬盘提示-bierror-domain-3">Q54：硬盘提示 BIError Domain 3</h2>
+<p>A：修改 config.plist：<br>
+SMBIOS 改机型为 iMacPro1,1 或 MacBookPro16,1 等 2018年及以后的机型。</p>
+<h2 id="q55卡在找不到安装器资源">Q55：卡在“找不到安装器资源”？</h2>
+<p>A：这个问题的原因可能是多种多样的：</p>
+<ul>
+<li>检查镜像的 md5 值是否相符</li>
+<li>某些版本的镜像是特定机型使用的，例如 Catalina 19H4 就是特定机型版本，此类情况请更换镜像系统版本</li>
+<li>对于 High Sierra 和 Mojave，需要使用终端修改时间，并断开网络</li>
+<li>对于 Catalina，请用终端验证一下系统时间是否和真实时间相差 8 小时，如果是，使用终端改为真实时间</li>
+<li>删除 drivers/UEFI 目录下的 EmuVariableUefi.efi（此项针对 Clover 用户）</li>
+<li>修改机型为最近三年，比如 MacBookPro14,1、MacBookPro15,1、iMac17,1 等等</li>
+<li>如果是双硬盘，拔掉那个不安装 macOS 的，待安装完后再插回去</li>
+</ul>
+<h2 id="q56进入安装界面后找不到硬盘">Q56：进入安装界面后，找不到硬盘。</h2>
+<p>A：此问题大多数情况下是因为使用了 VBoxHfs.efi，这个驱动在某些机型上（主要是笔记本和品牌台式机）无法读取本地硬盘，解决方法是换用 HFSPlus.efi。另一种可能，请检查硬盘是否处在 RAID 模式，RAID 状态无法正常安装 macOS。</p>
+<h2 id="q57进入-macos-后无法挂载-efi-分区无论使用命令行或配置工具都不行">Q57：进入 macOS 后，无法挂载 EFI 分区，无论使用命令行或配置工具都不行。</h2>
+<p>A：笔者曾经遇到过这个问题，在试过无数方法后，发现是格式化硬盘的时候忘记格式化 ESP 分区😂，请用命令行或 Diskgenuis 等工具格式化 ESP 分区为 FAT32 即解决问题。</p>
+<h2 id="q58首次安装跑完代码界面后进入一个灰色的屏幕鼠标可以移动但是其它什么都不显示">Q58：首次安装跑完代码界面后，进入一个灰色的屏幕，鼠标可以移动，但是其它什么都不显示。</h2>
+<p>A：笔者在安装 Big Sur 时遇到过这个问题。首先确保排除所有 config 设置及 kext 可能的问题：主要是针对内存设置的几个 Quirks；核显的 ig-platform-id 及其它属性先删除或屏蔽；以及尝试搭配使用不同版本的 Whatevergreen.kext。以笔者遇到的例子，最终排查结果如下：这个没有任何菜单和选项的灰色界面，其实是 Recovery 模式下 macOS Base System 的第二屏幕显示的内容，这个时候尝试重新插拔一下你的显示器接口，如果你有其他显示设备，可以尝试再接一个上去完成安装。对于 macOS，首推使用 DisplayPort 接口，1.2 及以上；其次是 HDMI，4k 需要 2.0 及以上；不推荐 DVI 接口；完全不建议使用 VGA 接口以及各类转接头。</p>
+<h2 id="q59升级到-big-sur-beta-1101-后右上角图标栏有大约三个图标的空白">Q59：升级到 Big Sur beta 11.0.1 后，右上角图标栏有大约三个图标的空白。</h2>
+<p>A：在此案例中，是搜狗输入法未能很好适配 Big Sur 造成的，升级搜狗输入法到最新版本可解决问题。</p>
+<h2 id="q60反复检查设置都对但-macos-就是一直黑屏">Q60：反复检查，设置都对，但 macOS 就是一直黑屏。</h2>
+<p>A：此现象有多种原因。在 AMD 平台的案例中，请在 BIOS 中关闭 Serial Port。</p>
+<h2 id="q61进入登陆界面后macos-卡住屏幕中间显示一个半透明状态-图标类似下图">Q61：进入登陆界面后，macOS 卡住，屏幕中间显示一个半透明状态  图标，类似下图：</h2>
+<p>[<img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="" loading="lazy"><br>
+<img src="https://oss.heipg.cn/2020/07/1607584065-eb479605271a1f0.png?x-oss-process=image/resize,m_fill,h_800,w_853" alt="" loading="lazy"></p>
+<p>](https://oss.heipg.cn/2020/07/1607584065-eb479605271a1f0.png)A：此问题一般由不同步的处理器 TSC 造成，对于大部分处理器，添加 CpuTscSync 一类的 Kext 即可解决问题（<a href="https://heipg.cn/tag/driver-package">VoodooTSCSync</a> 或 <a href="https://heipg.cn/tag/driver-package">CpuTscSync</a>）。</p>
+<h2 id="q62opencore-更新到-068-之后主题失效还有系统选择界面光标打滑怎么办">Q62：OpenCore 更新到 0.6.8 之后，主题失效，还有系统选择界面光标“打滑”怎么办？</h2>
+<p>A：第一部分主题失效，是因为开发团队大刀阔斧修改了主题服务文件，需要搭配新的主题文件才能开启图形界面，可以从<a href="https://heipg.cn/link/aHR0cHM6Ly9naXRodWIuY29tL2FjaWRhbnRoZXJhL09jQmluYXJ5RGF0YQ==">官方下载</a>也可以下载黑苹果星球打包好的文件：</p>
+<p>将解压后的 Resources 文件夹覆盖到 /EFI/OC/ 目录下的同名文件夹。OpenCore 0.7.0 需要将 PickerVariant 输入为 Acidanthera\GoldenGate 或其它你下载的主题名称。<br>
+第二个主题界面光标“打滑”现象修改以下选项即可解决。<br>
+[<img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="" loading="lazy"><br>
+<img src="https://oss.heipg.cn/2021/04/1619617543-232d08b94ad5010.png" alt="" loading="lazy"></p>
+<p>](https://oss.heipg.cn/2021/04/1619617543-232d08b94ad5010.png)</p>
+<h2 id="q63进入安装程序后在安装界面弹出未能安装所需的固件更新">Q63：进入安装程序后，在安装界面弹出“未能安装所需的固件更新”。</h2>
+<p>A：主要出现在安装 macOS Monterey 12.0.1 的过程中，有两种解决方法：</p>
+<ul>
+<li>
+<p>第一，修改 config.plist 文件 → PlatformInfo → Generic → AdviseFeatures → 修改为 True/勾选；</p>
+</li>
+<li>
+<p>如果第一种方法无效，第二种方法是升级 OpenCore 的版本，安装 12.0.1 建议 OpenCore 从 0.7.4 起步，升级可参考「<a href="https://heipg.cn/tutorial/update-efi-bootloader.html">升级引导工具的方法</a>」；## 目标<br>
+去除 iconfinder 上 icon 的水印</p>
+</li>
+<li>
+<p>原理</p>
+</li>
+</ul>
+<p>利用水印像素点和原图像素点颜色合并的原理，如果拥有加过水印的图片和水印图片，就可以反向推出原图原像素点的颜色；<strong>前提是你得拥有他的水印图片</strong></p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[全网最全BT 磁力搜索引擎索引-持续更新中]]></title>
+        <id>https://www.verysky.org/post/hHBuDM5gW/</id>
+        <link href="https://www.verysky.org/post/hHBuDM5gW/">
+        </link>
+        <updated>2022-07-28T13:58:30.000Z</updated>
+        <content type="html"><![CDATA[<p>写给热爱学习的朋友们</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">名字</th>
+<th style="text-align:left">说明</th>
+<th style="text-align:center">更新日期</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><a href="https://www.qssily.com/sites/cilisuoyin">趣导航</a></td>
+<td style="text-align:left"><a href="https://www.qssily.com/sites/cilisuoyin">https://www.qssily.com/sites/cilisuoyin</a> 提供长期稳定可用磁力索引—导航（全新升级） <a href="https://qssily.com/bt-magnetic/">&gt;旧导航</a></td>
+<td style="text-align:center">2021/5/01</td>
+</tr>
+<tr>
+<td style="text-align:left"><a href="https://dodder.club/">菟丝子资源社区</a></td>
+<td style="text-align:left"><a href="https://dodder.club/">https://dodder.club/</a> 菟丝子资源社区，收集了两千多万的资源，资源实时更新（索引每分钟更新一次），支持搜索和分类查看，音频、视频、图片、压缩文档、镜像等等资源分类查看，有兴趣可以去翻翻。</td>
+<td style="text-align:center">2022/05/21</td>
+</tr>
+<tr>
+<td style="text-align:left"><a href="https://www.cupfox.com/">茶杯狐</a></td>
+<td style="text-align:left"><a href="https://www.cupfox.com/">https://www.cupfox.com/</a>影视资源聚合搜索引擎</td>
+<td style="text-align:center">2020/6/26</td>
+</tr>
+<tr>
+<td style="text-align:left"><a href="https://laowang00.xyz/">老王磁力</a></td>
+<td style="text-align:left">备用域名：<a href="https://laowang.fun">laowang.fun</a><a href="https://laowangcili.monster">laowangcili.monster</a>磁力链接搜索引擎老王磁力(laowang.icu)索引了全球最新最热门的BT种子信息和磁力链接，提供磁力链接搜索、BT搜索、种子搜索等强大功能。</td>
+<td style="text-align:center">2020/12/26</td>
+</tr>
+<tr>
+<td style="text-align:left"><a href="https://xn--tfrs17es0d.xyz/">磁力猫</a></td>
+<td style="text-align:left">发布页：<a href="https://xn--tfrs17es0d.xyz/">http://磁力猫.xyz/</a> 比较干净的磁力站，资源也十分丰富，支持pikpak网盘转存</td>
+<td style="text-align:center">2022/6/26</td>
+</tr>
+<tr>
+<td style="text-align:left"><a href="http://clg.im">磁力狗</a></td>
+<td style="text-align:left">发布页：<a href="http://ciligou.top/">http://ciligou.top/</a><a href="http://clg.im">http://clg.im</a>最干净好用的磁力资源搜索引擎备用地址：<a href="http://ciligou.app/">http://ciligou.app/</a></td>
+<td style="text-align:center">2020/6/26</td>
+</tr>
+<tr>
+<td style="text-align:left"><a href="https://www.cilixiong.com/">磁力熊</a></td>
+<td style="text-align:left"><a href="https://www.cilixiong.com/">https://www.cilixiong.com/</a>豆瓣高清电影1080P高清磁力下载</td>
+<td style="text-align:center">2020/6/26</td>
+</tr>
+<tr>
+<td style="text-align:left"><a href="https://cltt.vip">磁力天堂</a></td>
+<td style="text-align:left">磁力搜索引擎-磁力天堂，高效的磁力搜索引擎 请牢记短网址&gt;&gt; https://cltt.me https://cltt.vip 类似的站点发布页：<a href="https://xn--tfrq9jjzak83g.com/">http://磁力天堂.com</a></td>
+<td style="text-align:center">2022/6/29</td>
+</tr>
+<tr>
+<td style="text-align:left"><a href="https://www.ciligod.com/">磁力天堂</a></td>
+<td style="text-align:left">影视资源网站，多为迅雷磁力链接，致力打造国内最大的磁力链资源发布中心，提供1280高清、720P、蓝光等超清电影下载资讯服务</td>
+<td style="text-align:center">2022/4/24</td>
+</tr>
+<tr>
+<td style="text-align:left"><a href="http://thepiratebay.ee/">海盗湾</a></td>
+<td style="text-align:left"><a href="http://thepiratebay.ee/">http://thepiratebay.ee/</a>备用域名：thehiddenbay.com，proxybay.app，中文支持较差，但英文资源丰富</td>
+<td style="text-align:center">2020/6/26</td>
+</tr>
+<tr>
+<td style="text-align:left"><a href="http://wxcli.xyz/fb">无限磁力</a></td>
+<td style="text-align:left"><a href="http://wxcli.xyz/fb">http://wxcli.xyz/fb</a>地址发布页：<a href="http://wx677.xyz/">http://wx677.xyz/</a>种子分享平台 / 磁力链搜索引擎</td>
+<td style="text-align:center">2021/11/01</td>
+</tr>
+<tr>
+<td style="text-align:left"><a href="https://zh.0mag.net/">无极磁链（MAG磁力站）</a></td>
+<td style="text-align:left"><a href="https://zh.0mag.net/">https://zh.0mag.net/</a>备用链接：<a href="https://6mag.net/">https://6mag.net/</a>ØMagnet种子分享平台 / 磁链搜索引擎，同时磁力链接可生成短链接！同类站点（英文版）：<a href="https://9mag.net/">https://9mag.net/</a><a href="https://0magnet.com/">https://0magnet.com/</a></td>
+<td style="text-align:center">2021/8/03</td>
+</tr>
+<tr>
+<td style="text-align:left"><a href="https://www.bttwo.com/">两个BT</a></td>
+<td style="text-align:left"><a href="https://www.bttwo.com/">https://www.bttwo.com/</a>免费电影，电视剧资源下载</td>
+<td style="text-align:center">2020/6/26</td>
+</tr>
+<tr>
+<td style="text-align:left"><a href="https://yts.mx">YTS/YIFY</a></td>
+<td style="text-align:left"><a href="https://yts.mx">https://yts.mx</a>yts.am 是目前访问量最高的盗版网站之一，超过了海盗湾。在原 BT 下载站 YTS 在2015年关闭之后，yts.am非正常的接手了 YTS 的品牌，它是多家尝试复活 YTS 和 YIFY 品牌的网站之一。备用域名：yts.ag，yts.lt</td>
+<td style="text-align:center">2021/5/14</td>
+</tr>
+<tr>
+<td style="text-align:left"><a href="https://quletu.cilimiaomiao.xyz/">SouCILI.INFO</a></td>
+<td style="text-align:left"><a href="https://quletu.cilimiaomiao.xyz/">https://quletu.cilimiaomiao.xyz/</a> 搜磁力-非常干净优雅的磁力搜索站点，不仅资源丰富，而且完全无广告，支持在线播放 可能需要下载磁力APP</td>
+<td style="text-align:center">2022/5/12</td>
+</tr>
+<tr>
+<td style="text-align:left"><a href="https://skrbtta.xyz/">skrbt</a></td>
+<td style="text-align:left"><a href="https://skrbtta.xyz/">https://skrbtta.xyz/</a>无广告，界面简洁的BT磁力搜索引擎，和以前的手撕包菜很像永久发布页：永久地址发布页：<a href="https://skrbt100.xyz">https://skrbt100.xyz</a></td>
+<td style="text-align:center">2022/1/08</td>
+</tr>
+<tr>
+<td style="text-align:left"><a href="http://seedhub.info/">Seedhub</a></td>
+<td style="text-align:left"><a href="http://seedhub.info/">http://seedhub.info/</a>磁力蓝光无水印影视下载，收录优质媒体资源1080P, 4K, 720P, 高清, 蓝光, BT, Torrent, 迅雷, 磁力, Magnet</td>
+<td style="text-align:center">2021/8/25</td>
+</tr>
+<tr>
+<td style="text-align:left"><a href="https://sbt4031.icu/">Sbt Magnet</a></td>
+<td style="text-align:left"><a href="https://sbt4031.icu/">https://sbt4031.icu/</a>好用的种子搜索、磁力链接搜索引擎地址发布页：<a href="http://sbt2066.xyz/">http://sbt2066.xyz/</a></td>
+<td style="text-align:center">2021/5/01</td>
+</tr>
+<tr>
+<td style="text-align:left"><a href="https://www.mp4ba.cc/">mp4ba</a></td>
+<td style="text-align:left"><a href="https://www.mp4ba.cc/">https://www.mp4ba.cc/</a>老牌高清电影种子站：mp4ba（<a href="https://u13811899.ctfile.com/fs/13811899-316413165">种子打包</a>）现在改在线播放了</td>
+<td style="text-align:center">2020/6/26</td>
+</tr>
+<tr>
+<td style="text-align:left"><a href="https://www.dhtclub.com/">DHTCLUB</a></td>
+<td style="text-align:left"><a href="https://www.dhtclub.com/">https://www.dhtclub.com/</a>只分享高品质影视资源 只求质量、不求数量、不抢首发！</td>
+<td style="text-align:center">2021/8/25</td>
+</tr>
+<tr>
+<td style="text-align:left"><a href="https://btbtt12.com/">BT之家</a></td>
+<td style="text-align:left"><a href="https://btbtt12.com/">https://btbtt12.com/</a>提供最新最全高清电影、动漫、韩剧、日剧、美剧、无损音乐、体育、小说等BT迅雷下载以及资讯</td>
+<td style="text-align:center">2021/8/22</td>
+</tr>
+<tr>
+<td style="text-align:left"><a href="https://www.btsj5.com/">BT世界</a></td>
+<td style="text-align:left"><a href="https://www.btsj5.com/">https://www.btsj5.com/</a> 高清美剧资源</td>
+<td style="text-align:center">2021/7/03</td>
+</tr>
+<tr>
+<td style="text-align:left"><a href="http://www.btfan.com/">btfan</a></td>
+<td style="text-align:left"><a href="http://www.btfan.com/">http://www.btfan.com/</a>一个BT聚合搜索网站。</td>
+<td style="text-align:center">2020/7/08</td>
+</tr>
+<tr>
+<td style="text-align:left"><a href="https://www.btbtt15.com/forum-index-fid-950.htm">btbtt15</a></td>
+<td style="text-align:left"><a href="https://www.btbtt15.com/">https://www.btbtt15.com/</a>资源十分丰富，还出了APP，更新也比较及时</td>
+<td style="text-align:center">2022/6/29</td>
+</tr>
+<tr>
+<td style="text-align:left"><a href="https://www.bttian.com/">bt 电影天堂</a></td>
+<td style="text-align:left"><a href="https://www.bttian.com/">https://www.bttian.com/</a>专注于高清电影下载服务</td>
+<td style="text-align:center">2022/1/08</td>
+</tr>
+<tr>
+<td style="text-align:left"><a href="https://www.868888.net/">868888</a></td>
+<td style="text-align:left"><a href="https://www.868888.net/">https://www.868888.net/</a>据说什么都能搜到</td>
+<td style="text-align:center">2020/12/26</td>
+</tr>
+</tbody>
+</table>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[虚拟显示器——在没有显示器连接时激活Windows 10多显示器设置]]></title>
+        <id>https://www.verysky.org/post/Hl5L5gRlC/</id>
+        <link href="https://www.verysky.org/post/Hl5L5gRlC/">
+        </link>
+        <updated>2021-10-05T13:14:49.000Z</updated>
+        <content type="html"><![CDATA[<p>原文地址：<a href="https://www.amyuni.com/forum/viewtopic.php?t=3030">Activating a Secondary Display on Windows 10 when no Monitor is Connected</a></p>
+<p>下面为机翻，调整了关键的命令行关键字，以便复制运行。需要注意的是本文是虚拟的显示器，不是虚拟桌面。该功能可以将虚拟显示器扩展投屏分享，不与主屏发生联系，且不用外接连接线。</p>
+<blockquote>
+<p>在某些情况下，您需要模拟一个或多个连接到您的系统的辅助显示器。这是最需要的远程控制应用程序或USB类型的显示器，如<a href="https://www.amyuni.com/en/desktop-editions/usb-mobile-monitor/learn-more">Amyuni USB移动显示器</a>产品。</p>
+<p>在Windows 10之前，很容易通过显示设置控制面板激活VGA显示器来模拟连接第二个显示器。如果你正在寻找旧系统的解决方案，滚动到这篇文章的结尾。</p>
+<p>Windows 10删除了在没有连接VGA显示器时激活VGA显示器的选项。我们在这里提供了一个简单而免费的解决方案，可以在您的系统上创建多达4个虚拟显示器。</p>
+<p>以下是将虚拟显示器添加到您的系统的过程(仅限Windows 10 !)</p>
+<p>- 从<a href="https://www.amyuni.com/downloads/usbmmidd_v2.zip">https://www.amyuni.com/downloads/usbmmidd_v2.zip</a> 下载我们的虚拟显示驱动程序&gt;</p>
+<p>- 将zip文件解压缩到一个空文件夹，例如c: \temp\usbmmidd_v2</p>
+<p>- 请确保您像阅读任何其他软件产品一样阅读License.txt文件</p>
+<p>- 以管理员身份打开命令提示符窗口(除非以管理员身份运行，否则不能向系统添加设备)</p>
+<p>- 执行如下命令:</p>
+<p>- CD c:\temp\usbmmid_v2(或任何你选择的目标文件夹)</p>
+<p>- deviceinstaller64 install usbmmidd.inf usbmmidd</p>
+<p>- 请确保您看到驱动程序由<a href="https://www.amyuni.com/">Amyuni Technologies Inc.</a>签署的消息。这是一个确认，驱动程序通过微软驱动程序签名程序，是无病毒的</p>
+<p>- deviceinstaller64 enableidd 1</p>
+<p>为了在Windows 10中添加4个虚拟显示器，您最多可以运行最后一条命令4次。</p>
+<p>如果你使用的是32位系统，将&quot;deviceinstaller64&quot;替换为&quot;deviceinstaller&quot;</p>
+<p>包含的批处理文件usbmmid .bat会自动运行这些命令，并在32位或64位版本的设备安装程序之间进行选择。如果您不习惯打开命令提示符并输入这些命令，右键单击usbmmid .bat和“以管理员身份运行”。</p>
+<p>就是这样。现在在显示设置中有一个高清晰度显示器。默认分辨率是1920x1080像素，如果您需要其他分辨率，请检查包含的idd_instructions.txt文件，以了解如何指定您自己的分辨率。在你的系统的显示设置中，你可以放置显示器，改变分辨率，扩展桌面或者做任何你用真实显示器做的事情。</p>
+<p>虚拟显示器默认支持以下显示分辨率：</p>
+<p>1024x768像素<br>
+1360 x 768像素<br>
+1440 x 900像素<br>
+1600 x 900像素<br>
+1600 x 1200像素<br>
+1920 x 1080像素(默认分辨率)<br>
+1920 x 1200像素<br>
+2560 x 1440像素<br>
+3840x2160像素<br>
+执行上述第一步后，您可以通过更改以下注册表项来修改支持的分辨率列表：<br>
+<code> HKEY\U LOCAL\U MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\WUDF\Services\usbmmIdd\Parameters\Monitors</code><br>
+通过此注册表项最多可以定义10个分辨率。键的名称应该从“0”到“9”。（默认）注册表值定义默认显示器分辨率。</p>
+<p>禁用虚拟显示器。</p>
+<p>使用实例<br>
+deviceinstaller64 enableidd 0<br>
+(如果添加了多个虚拟显示，请多次运行此命令)</p>
+<p>重新激活:<br>
+deviceinstaller64 enableidd 1<br>
+要从你的系统中完全移除驱动程序，你可以通过设备管理器卸载“USB移动显示器虚拟显示”，或者运行以下命令:<br>
+deviceinstaller64 stop usbmmidd<br>
+deviceinstaller64 remove usbmmid<br>
+Windows 10之前的操作步骤如下:</p>
+<p>- 右键单击桌面，选择“屏幕分辨率”或“显示设置”</p>
+<p>- 点击主显示器旁边的“检测”</p>
+<p>- 选择“未检测到另一个显示”-&gt;多个显示-&gt;尝试连接VGA</p>
+<p>- 这将添加第二个虚拟显示器，然后您可以将其配置为真实显示器</p>
+<p>其他适用于所有系统的解决方案是购买一个硬件狗连接到你的系统的HDMI、DVI或VGA连接器，以模拟显示器是实际连接的。</p>
+<p>欲了解更多有关USB移动显示器的详细信息，请访问我们的专门网站:</p>
+<p><a href="https://www.amyuni.com/en/desktop-editions/usb-mobile-monitor/learn-more">www.usbmobilemonitor.com</a><br>
+Amyuni开发团队</p>
+</blockquote>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Hello Gridea]]></title>
+        <id>https://www.verysky.org/post/hello-gridea/</id>
+        <link href="https://www.verysky.org/post/hello-gridea/">
+        </link>
+        <updated>2018-12-11T16:00:00.000Z</updated>
+        <summary type="html"><![CDATA[<p>👏  欢迎使用 <strong>Gridea</strong> ！<br>
+✍️  <strong>Gridea</strong> 一个静态博客写作客户端。你可以用它来记录你的生活、心情、知识、笔记、创意... ...</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>👏  欢迎使用 <strong>Gridea</strong> ！<br>
+✍️  <strong>Gridea</strong> 一个静态博客写作客户端。你可以用它来记录你的生活、心情、知识、笔记、创意... ...</p>
+<!-- more -->
+<p><a href="https://github.com/getgridea/gridea">Github</a><br>
+<a href="https://gridea.dev/">Gridea 主页</a><br>
+<a href="http://fehey.com/">示例网站</a></p>
+<h2 id="特性">特性👇</h2>
+<p>📝  你可以使用最酷的 <strong>Markdown</strong> 语法，进行快速创作</p>
+<p>🌉  你可以给文章配上精美的封面图和在文章任意位置插入图片</p>
+<p>🏷️  你可以对文章进行标签分组</p>
+<p>📋  你可以自定义菜单，甚至可以创建外部链接菜单</p>
+<p>💻  你可以在 <strong>Windows</strong>，<strong>MacOS</strong> 或 <strong>Linux</strong> 设备上使用此客户端</p>
+<p>🌎  你可以使用 <strong>𝖦𝗂𝗍𝗁𝗎𝖻 𝖯𝖺𝗀𝖾𝗌</strong> 或 <strong>Coding Pages</strong> 向世界展示，未来将支持更多平台</p>
+<p>💬  你可以进行简单的配置，接入 <a href="https://github.com/gitalk/gitalk">Gitalk</a> 或 <a href="https://github.com/SukkaW/DisqusJS">DisqusJS</a> 评论系统</p>
+<p>🇬🇧  你可以使用<strong>中文简体</strong>或<strong>英语</strong></p>
+<p>🌁  你可以任意使用应用内默认主题或任意第三方主题，强大的主题自定义能力</p>
+<p>🖥  你可以自定义源文件夹，利用 OneDrive、百度网盘、iCloud、Dropbox 等进行多设备同步</p>
+<p>🌱 当然 <strong>Gridea</strong> 还很年轻，有很多不足，但请相信，它会不停向前 🏃</p>
+<p>未来，它一定会成为你离不开的伙伴</p>
+<p>尽情发挥你的才华吧！</p>
+<p>😘 Enjoy~</p>
+]]></content>
+    </entry>
+</feed>
